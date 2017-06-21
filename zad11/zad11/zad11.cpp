@@ -162,7 +162,7 @@ void laasonenDiscretisation(double h, double dt)
 
 	double tMax = 2.0;
 	double lambda = dt / h / h;//raczej zawsze 1, chyba ze beda baddzo male kroki, wtedy moze byc blad
-	int n = b / h; // n - ilosc wêz³ów zmiennej przestrzennej             //moze h-1, zobaczyc
+	int n = b / h; // n - ilosc wêz³ów zmiennej przestrzennej     
 	int k = tMax / dt; // k - ilosc wezlow zmiennej czasowej
 
 	prevResult = new double[n];
@@ -203,7 +203,7 @@ void laasonenDiscretisation(double h, double dt)
 
 	D[0] = 1.0;
 	U[0] = 0.0;
-	//uzupelnianie macierzy A   gosc ma inaczej
+	//uzupelnianie macierzy A
 	for (int i = 1; i < n-1; i++) 
 	{
 		U[i] = lambda;
@@ -244,9 +244,6 @@ void laasonenDiscretisation(double h, double dt)
 
 	for (int j = 1; j<k; j++)
 	{
-		//result[0] = 0.0;
-		//result[n - 1] = 1.0; // zgodnie z warunkami brzegowymi
-		//t = j*dtt;
 
 		prevResult[0] = 0.0;
 		prevResult[n - 1] = 1.0; // zgodnie z warunkami brzegowymi
@@ -254,8 +251,6 @@ void laasonenDiscretisation(double h, double dt)
 		solveSor(prevResult,result,n);
 		//solveThomas(prevResult,result,n);
 
-		//result[0] = 0.0;
-		//result[n - 1] = 1.0; // zgodnie z warunkami brzegowymi
 
 		file << tNodes[j];
 
@@ -267,9 +262,6 @@ void laasonenDiscretisation(double h, double dt)
 		}
 
 		file << endl;
-
-
-		//cout << "test j: " << j << " k: " << k << endl;
 	}
 
 	delete[] xNodes;
