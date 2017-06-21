@@ -11,6 +11,13 @@
 
 using namespace std;
 
+double analyticSolution(double x, double t);
+double getMatrix(int i, int j);
+void calculateNextSorX(double* newResult, double* prevSorResult, double omega, int n);
+void solveSor(double* prevResult, double* result, int n);
+void solveLowerTriangularSet(double* xn, double* B, double omega, int n);
+void solveThomas(double* prevResult, double* result, int n);
+
 //macierz trójdiagonalna jako wektory
 double* L;
 double* U;
@@ -47,6 +54,69 @@ double analyticSolution(double x, double t)
 {
 	return erf(x / 2 / sqrt(t));//sqrt(t)*D ale D = 1.0
 }
+
+void solveSor(double* prevResult, double* result, int n)
+{
+	double omega = 1.0;
+	int nSor = 50;
+	double tolArg = 1e-8;
+	double tolRes = 1e-10;
+
+	double* tmpResult = new double[n];
+
+	for (int j = 0; j < n; j++)
+	{
+		tmpResult[j] = prevResult[j];
+	}
+
+	//ilosc iteracji - dodatkowy max oprocz dokladnosci
+	int i = 0;
+
+	do
+	{
+		for (int j = 0; j < n; j++)
+		{
+			tmpResult[j] = result[j];
+		}
+
+		calculateNextSorX(result, tmpResult, omega, n);
+
+		//cout << "iteracja: " << i << " wektor x: ";
+		//printVector(xn, n);
+		//cout << " normMax(Xn - Xn-1): " << normMax(xn, x0, n) << " normMaxRes(Ax-B): " << normMaxResiduum(A, xn, B, n) << endl;
+
+		i++;
+
+	} while (i < nSor);
+	//while ((i < nSor) && (normMax(xn, x0, n)>tolArg || normMaxResiduum(A, xn, B, n)>tolRes));
+
+	delete[] tmpResult;
+}
+
+void calculateNextSorX(double* newResult, double* prevSorResult, double omega, int n)
+{
+
+	prevSorResult[n - 1] = prevResult[n - 1] / ((1 - 1 / omega)*D[n - 1]);
+
+	//prawa strona B-U*xn-1
+	for (int i = n-2; i <= 0; i++)
+	{
+		prevSorResult[i] = (prevResult[i+1]-U[i]*prevSorResult[i+1]) / ((1-1/omega)*D[i]);
+	}
+
+	solveLowerTriangularSet(newResult, prevSorResult, omega, n);
+}
+
+void solveLowerTriangularSet(double* xn, double* B, double omega, int n)
+{
+	xn[0] = B[0] / ((1/omega)*D[0]);
+
+	for (int i = 1; i < n; i++)
+	{
+		xn[i] = (B[i] - L[i-1]*xn[i-1]) / ((1/omega)*D[i]);
+	}
+}
+
 
 void solveThomas(double* prevResult, double* result, int n)
 {
@@ -112,7 +182,7 @@ void laasonenDiscretisation(double h, double dt)
 	}
 
 	//ustawienie macierzy i wyrazu wolnego
-	prevResult[0] = 0.0;
+	prevResult[0] = -1.0;
 	prevResult[n - 1] = 1.0;
 
 	D[0] = 1.0;
@@ -150,24 +220,25 @@ void laasonenDiscretisation(double h, double dt)
 	//wrzucam rozwiazania w chwili t=0
 	for (int i = 0; i < n; i++)
 	{
-		file << prevResult[i] << ";";
+		file << -prevResult[i] << ";";
 	}
 
 	file << endl;
 
 	for (int j = 1; j<k; j++)
 	{
-		result[0] = 0.0;
-		result[n - 1] = 1.0; // zgodnie z warunkami brzegowymi
+		//result[0] = 0.0;
+		//result[n - 1] = 1.0; // zgodnie z warunkami brzegowymi
 		//t = j*dtt;
 
 		prevResult[0] = 0.0;
 		prevResult[n - 1] = 1.0; // zgodnie z warunkami brzegowymi
 
-		solveThomas(prevResult,result,n);
+		solveSor(prevResult,result,n);
+		//solveThomas(prevResult,result,n);
 
-		result[0] = 0.0;
-		result[n - 1] = 1.0; // zgodnie z warunkami brzegowymi
+		//result[0] = 0.0;
+		//result[n - 1] = 1.0; // zgodnie z warunkami brzegowymi
 
 		file << tNodes[j];
 
