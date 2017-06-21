@@ -57,16 +57,18 @@ double analyticSolution(double x, double t)
 
 void solveSor(double* prevResult, double* result, int n)
 {
-	double omega = 1.0;
-	int nSor = 50;
+	double omega = 2.0;
+	int nSor = 100;
 	double tolArg = 1e-8;
 	double tolRes = 1e-10;
 
 	double* tmpResult = new double[n];
+	double* tmpResult2 = new double[n];
 
 	for (int j = 0; j < n; j++)
 	{
 		tmpResult[j] = prevResult[j];
+		tmpResult2[j] = prevResult[j];
 	}
 
 	//ilosc iteracji - dodatkowy max oprocz dokladnosci
@@ -76,10 +78,10 @@ void solveSor(double* prevResult, double* result, int n)
 	{
 		for (int j = 0; j < n; j++)
 		{
-			tmpResult[j] = result[j];
+			tmpResult[j] = tmpResult2[j];
 		}
 
-		calculateNextSorX(result, tmpResult, omega, n);
+		calculateNextSorX(tmpResult2, tmpResult, omega, n);
 
 		//cout << "iteracja: " << i << " wektor x: ";
 		//printVector(xn, n);
@@ -90,30 +92,44 @@ void solveSor(double* prevResult, double* result, int n)
 	} while (i < nSor);
 	//while ((i < nSor) && (normMax(xn, x0, n)>tolArg || normMaxResiduum(A, xn, B, n)>tolRes));
 
+	for (int j = 0; j < n; j++)
+	{
+		result[j] = tmpResult2[j];
+	}
+
 	delete[] tmpResult;
+	delete[] tmpResult2;
 }
 
 void calculateNextSorX(double* newResult, double* prevSorResult, double omega, int n)
 {
+	double* tmpResult = new double[n];
 
-	prevSorResult[n - 1] = prevResult[n - 1] / ((1 - 1 / omega)*D[n - 1]);
+	tmpResult[n - 1] = prevResult[n - 1] - (prevSorResult[n - 1] * (1 - omega)*D[n - 1]);
 
 	//prawa strona B-U*xn-1
-	for (int i = n-2; i <= 0; i++)
+	for (int i = n-2; i >= 0; i--)
 	{
-		prevSorResult[i] = (prevResult[i+1]-U[i]*prevSorResult[i+1]) / ((1-1/omega)*D[i]);
+		tmpResult[i] = prevResult[i]-(prevSorResult[i]*(1 - omega)*D[i] + U[i]*prevSorResult[i+1]);
 	}
 
-	solveLowerTriangularSet(newResult, prevSorResult, omega, n);
+	solveLowerTriangularSet(newResult, tmpResult, omega, n);
+
+	for (int j = 0; j < n; j++)
+	{
+		prevSorResult[j] = tmpResult[j];
+	}
+
+	delete[] tmpResult;
 }
 
 void solveLowerTriangularSet(double* xn, double* B, double omega, int n)
 {
-	xn[0] = B[0] / ((1/omega)*D[0]);
+	xn[0] = B[0] / (omega*D[0]);
 
 	for (int i = 1; i < n; i++)
 	{
-		xn[i] = (B[i] - L[i-1]*xn[i-1]) / ((1/omega)*D[i]);
+		xn[i] = (B[i] - L[i-1]*xn[i-1]) / (omega*D[i]);
 	}
 }
 
@@ -182,8 +198,8 @@ void laasonenDiscretisation(double h, double dt)
 	}
 
 	//ustawienie macierzy i wyrazu wolnego
-	prevResult[0] = -1.0;
-	prevResult[n - 1] = 1.0;
+	prevResult[0] = 1.0;
+	prevResult[n - 1] = -1.0;
 
 	D[0] = 1.0;
 	U[0] = 0.0;
@@ -221,6 +237,7 @@ void laasonenDiscretisation(double h, double dt)
 	for (int i = 0; i < n; i++)
 	{
 		file << -prevResult[i] << ";";
+
 	}
 
 	file << endl;
