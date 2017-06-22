@@ -27,7 +27,7 @@ double* prevResult;
 double* result;
 double* analyticResult;
 
-double DFactor = 1.0; //wspó³czynnik dyfuzji
+double DFactor = 1.0; //wspó³czynniktransportu ciepla
 double b = 10;//6.0*sqrt(2.0); //koniec przedzia³u dla zmiennej przestrzennej
 
 double getMatrix(int i, int j)
@@ -242,8 +242,16 @@ void laasonenDiscretisation(double h, double dt)
 
 	file << endl;
 
+	//inicjalizacja zmiennych zwiazanych z szukaniem maksymalnego bledu w funkcji czasu (zad3)
+	double maxError;
+	double tmpError;
+	ofstream fileErrorT("MaxBladWFunkcjiCzasu.csv", fstream::trunc);
+	fileErrorT.imbue(mylocale);
+
 	for (int j = 1; j<k; j++)
 	{
+		maxError = 0.0;
+		tmpError = 0.0;
 
 		prevResult[0] = 0.0;
 		prevResult[n - 1] = 1.0; // zgodnie z warunkami brzegowymi
@@ -256,13 +264,48 @@ void laasonenDiscretisation(double h, double dt)
 
 		for (int i = 0; i < n; i++)
 		{
+			//wygenerowanie arkusza danych rozwiazania analitycznego (zad2)
+			//result[i] = analyticSolution(xNodes[i], tNodes[j]);
 			file << result[i] << ";";
 
 			prevResult[i] = -result[i];
+
+			//wygenerowanie danych zwiazanych z szukaniem maksymalnego bledu w funkcji czasu (zad3)
+			tmpError = fabs(result[i] - analyticSolution(xNodes[i], tNodes[j]));
+			if (tmpError > maxError)
+			{
+				maxError = tmpError;
+			}
 		}
+
+		fileErrorT << tNodes[j] << ";" << maxError << ";" << endl;
 
 		file << endl;
 	}
+
+
+	//zad1
+	//maksymalny blad bezwzgledny dla tmax (ostatnie co bylo liczone to wlasnie rownanie dla tmax) w funkcji kroku przestrzennego h (musze uruchomic program kilka razy z roznym krokiem h)
+	/*
+	double maxError = 0.0;
+	double tmpError;
+	for (int i = 0; i < n; i++)
+	{
+		tmpError = fabs(result[i] - analyticSolution(xNodes[i], tNodes[k - 1]));
+		if (tmpError > maxError)
+		{
+			maxError = tmpError;
+		}
+	}
+
+	ofstream fileErrorTMax("BladTmax.csv", fstream::app);
+	fileErrorTMax.imbue(mylocale);
+	fileErrorTMax << h << ";" << log10(h) << ";" << maxError << ";" << log10(maxError) << ";" << endl;
+	fileErrorTMax.close();
+	*/
+
+	//zad3
+	fileErrorT.close();
 
 	delete[] xNodes;
 	delete[] tNodes;
@@ -283,7 +326,7 @@ void laasonenDiscretisation(double h, double dt)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	double h = 3e-2;
+	double h = 0.02;
 	double dt = h*h;
 
 	laasonenDiscretisation(h, dt);
