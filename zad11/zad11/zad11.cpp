@@ -27,7 +27,7 @@ double* prevResult;
 double* result;
 double* analyticResult;
 
-double DFactor = 1.0; //wspó³czynniktransportu ciepla
+double DFactor = 1.0; //wspó³czynnik transportu ciepla
 double b = 10;//6.0*sqrt(2.0); //koniec przedzia³u dla zmiennej przestrzennej
 
 double getMatrix(int i, int j)
@@ -83,14 +83,10 @@ void solveSor(double* prevResult, double* result, int n)
 
 		calculateNextSorX(tmpResult2, tmpResult, omega, n);
 
-		//cout << "iteracja: " << i << " wektor x: ";
-		//printVector(xn, n);
-		//cout << " normMax(Xn - Xn-1): " << normMax(xn, x0, n) << " normMaxRes(Ax-B): " << normMaxResiduum(A, xn, B, n) << endl;
 
 		i++;
 
 	} while (i < nSor);
-	//while ((i < nSor) && (normMax(xn, x0, n)>tolArg || normMaxResiduum(A, xn, B, n)>tolRes));
 
 	for (int j = 0; j < n; j++)
 	{
@@ -320,9 +316,6 @@ void laasonenDiscretisation(double h, double dt)
 
 	file.close();
 }
-
-
-
 
 int _tmain(int argc, _TCHAR* argv[])
 {
